@@ -78,20 +78,22 @@ def blink (inp):
     print("hi")
         
     
-tog = True
+bs = True
+client = True
 
 def draw():
-    global font,tog
-    
-    if tog:
+    global font,bs
+    inputx 
+    if (client):
+        #set input
+        
+    if bs:
         setGrid("ABCDEFGHI")
         fill(255)
         square (500,500,50)
     
     elif not tog:
         setGrid("XYZWLMNOP")
-    tog = not tog
-    delay(200)
     
 
 def mouseReleased():
