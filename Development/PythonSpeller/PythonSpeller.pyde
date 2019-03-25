@@ -1,14 +1,19 @@
+import random
 font = PFont()
 Xgrid,Ygrid = 30,40
 gridSize = 130
 gap = 30
 nowgrid = ""
+blinksq = "r0,r1,r2,c0,c1,c2".split(",")
+
+
 
 def setup():
     global font
     font = createFont("Arial",100)
     size(1500,900)
     background(0)
+    blinksq = "r0,r1,r2,c0,c1,c2".split(",")
     
     
     
@@ -46,9 +51,21 @@ def setGrid(a9):
     global nowgrid
     nowgrid = a9
     
-    
+def unblink(inp):
+    global nowgrid  
+    pos = inp[1]  
+    if inp[0] == "r":
+        blockfill(pos,0,nowgrid[pos])
+        blockfill(pos,1,nowgrid[pos+3])
+        blockfill(pos,2,nowgrid[pos+6])
+        
+    elif inp[0] == "c":
+        blockfill(0,pos,nowgrid[pos*3])
+        blockfill(1,pos,nowgrid[pos*3+1])
+        blockfill(2,pos,nowgrid[pos*3+2])
+
 def blink (inp):
-    global nowgrid
+
     r=((0,0),(0,1),(0,2),
        (1,0),(1,1),(1,2),
        (2,0),(2,1),(2,2))
@@ -61,40 +78,38 @@ def blink (inp):
         blockfill(pos,0," ")
         blockfill(pos,1," ")
         blockfill(pos,2," ")
-        delay(80)
-        blockfill(pos,0,nowgrid[pos])
-        blockfill(pos,1,nowgrid[pos+3])
-        blockfill(pos,2,nowgrid[pos+6])
         
     elif inp[0] == "c":
         pos = int(inp[1])
         blockfill(0,pos,"X")
         blockfill(1,pos,"X")
         blockfill(2,pos,"X")
-        delay(80)
-        blockfill(0,pos,nowgrid[pos*3])
-        blockfill(1,pos,nowgrid[pos*3+1])
-        blockfill(2,pos,nowgrid[pos*3+2])
-    print("hi")
         
     
-bs = True
+bs = False
 client = True
+bstate = 0
+blinksq = ['r0', 'r1', 'r2', 'c0', 'c1', 'c2']
 
 def draw():
-    global font,bs
-    inputx 
-    if (client):
+    global font,bs,bstate,blinksq
+    
+    if bs:
+        print(blinksq)
+        blink(blinksq[bstate])
+        if bstate>5:
+            bstate=0
+        else:
+            bstate+=1
+        
+    #if (client):
         #set input
         
-    if bs:
+    else:
         setGrid("ABCDEFGHI")
-        fill(255)
-        square (500,500,50)
-    
-    elif not tog:
-        setGrid("XYZWLMNOP")
-    
+        random.shuffle(blinksq)
+    bs = not bs
+    delay(80)
 
 def mouseReleased():
     setGrid("XYZWLMNOP")
