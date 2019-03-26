@@ -43,7 +43,7 @@ if not bypass:
 
 
 #########Import model##################
-svc_clf = joblib.load("weight2/weight_PavarisaNewUseRealSGD_1000_BatchPhasePower52.sav")
+svc_clf = joblib.load("weight_PavarisaNewUseRealSGD_1000_BatchPhasePower52.sav")
 print(svc_clf)
 P300_clf = joblib.load(open('finalized_p300model.sav', 'rb'))
 #########Import model##################
@@ -87,7 +87,7 @@ phaseData = np.array([np.unwrap(np.angle(hilbert(i))) for i in bandpassData])
 powerData = np.array([np.abs(hilbert(i)) for i in bandpassData])
 print(phaseData.shape)
 print(powerData.shape)
-prespeller("BatchPhasePower")
+
 aaa=np.ravel((phaseData,powerData))
 print("aaa",aaa.shape)
 #shape=(8,4,1000)
