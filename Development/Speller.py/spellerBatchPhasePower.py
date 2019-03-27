@@ -37,7 +37,7 @@ if not bypass:
     print(1)
     sam_num = 0
     Series = []
-    bb, a = pre.butter_bandpass(0.5, 30, 500, order=5)
+
 
 
 
@@ -50,7 +50,7 @@ P300_clf = joblib.load(open('finalized_p300model.sav', 'rb'))
 print('models imported')
 
 print('ready')
-x=input("INSERT OK TO Start ")
+#x=input("INSERT OK TO Start ")
 
 print('starting')
 
@@ -65,14 +65,16 @@ if not bypass:
     print(np.asarray(Series).shape)
 
 else:
-    ind = random.randint(26)
-    Series = np.load("npSave/Pavarisa280219R06.npy")
+    ind = random.randint(0,25)
+    print(ind)
+    Series = np.load("../npSave/Pavarisa280219R06.npy")[ind,0,:,:]
     print(np.asarray(Series).shape)
 #########Collecting Speech Imagery Data##################
 
 
 
 #########Preprocess Data##################
+bb, a = pre.butter_bandpass(0.5, 30, 500, order=5)
 bandpassData = pre.lfilter(bb, a, Series)
 print(bandpassData.shape)
 KaiserData = []

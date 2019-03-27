@@ -1,21 +1,56 @@
+
 import random
+import socket
+import os
+
+HOST = '127.0.0.1'  # The server's hostname or IP address
+PORT = 5000        # The port used by the server
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+conn = None
+
 font = PFont()
 Xgrid,Ygrid = 30,40
-gridSize = 100
-gap = 30
+gridSize = 260
+gap = 25
 nowgrid = ""
-blinksq = "r0,r1,r2,c0,c1,c2".split(",")
-fsize = 100
+fsize = 200
 tablen = 3*(gridSize+2*gap)
 
 def setup():
-    global font
+    path = sketchPath("")
+    os.chdir(path+"/../Speller.py")
+    repath = os.getcwd()
+    os.system("start; CMD /k workbench.py")
+
+    global font,client,conn
     font = createFont("Arial",fsize)
     size(1900,1000)
     background(255)
+    fill(255)
+    stroke(0)
+    rect(Xgrid+tablen+200,Ygrid+130,800,150)
     blinksq = "r0,r1,r2,c0,c1,c2".split(",")
     
+    HOST = '127.0.0.1'  # The server's hostname or IP address
+    PORT = 5000        # The port used by the server
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect((HOST,PORT))
+    while True:
+        if client.recv(1024) == b"ready":
+            print("ready")
+            break
+
     
+def waitsign(b):
+    if b:
+        textFont(font, 100)
+        fill(255,0,0)
+        text("wait",Xgrid+tablen+500,Ygrid+gridSize+400)
+    else:
+        fill(255)
+        noStroke()
+        rect(Xgrid+tablen+500,Ygrid+500,800,400)
+        
     
 def alpSet(*s):
     global font
@@ -47,22 +82,12 @@ def blockfill(x,y,c):
 def setGrid(a9):
     for y in range(3):
         for x in range(3):
+            noStroke()
             blockfill(x,y,a9[3*y+x])
     global nowgrid
     nowgrid = a9
     
-def unblink(inp):
-    global nowgrid  
-    pos = inp[1]  
-    if inp[0] == "r":
-        blockfill(pos,0,nowgrid[pos])
-        blockfill(pos,1,nowgrid[pos+3])
-        blockfill(pos,2,nowgrid[pos+6])
-        
-    elif inp[0] == "c":
-        blockfill(0,pos,nowgrid[pos*3])
-        blockfill(1,pos,nowgrid[pos*3+1])
-        blockfill(2,pos,nowgrid[pos*3+2])
+
 
 def blink (inp):
 
@@ -73,6 +98,7 @@ def blink (inp):
     c = ((0,0),(1,0),(2,0),
         (0,1),(1,1),(2,1),
         (0,2),(1,2),(2,2))
+    noStroke()
     if inp[0] == "r":
         pos = int(inp[1])
         blockfill(pos,0," ")
@@ -85,46 +111,85 @@ def blink (inp):
         blockfill(1,pos," ")
         blockfill(2,pos," ")
         
-    
-bs = False
+typed = ""
 client = True
 bstate = 0
-blinksq = ['r0', 'r1', 'r2', 'c0', 'c1', 'c2']
+ostate = False
+inlet=[]
+#blinksq = ['r0', 'r1', 'r2', 'c0', 'c1', 'c2']
 
-def draw():
-    global font,bs,bstate,blinksq
-    
-    if bs:
-        if bstate==0:
-            delay(920)
-        blink(blinksq[bstate])
-        print(bstate)
-        bstate+=1
-        delay(30)
-        if bstate==6:
-            bstate=0
-            random.shuffle(blinksq)
-            print(blinksq)
-        delay(80)
+def UI(alp9,blinksq):
+    global font,bstate,ostate,typed,Xgrid,Ygrid,gridSize
+    if bstate%2 == 1:
+        if bstate==len(blinksq)*2+1:
+            setGrid("         ")
+            waitsign(True)
+            client.send(b"finished")
+            typing = str(client.recv(1024).decode("utf-8")).split(" ")[1]
+            typed += typing
+            textFont(font, 100)
+            fill(255)
+            stroke(0)
+            rect(Xgrid+tablen+200,Ygrid+130,800,150)
+            fill(0)
+            text(typed,Xgrid+tablen+200,Ygrid+gridSize)
+        
+            delay(500) # p300 pause
+        else:
+            blink(blinksq[bstate//2])
+            print(bstate)
+            delay(30)
+            delay(80)
+        
     #if (client):
         #set input
         
     else:
-        setGrid("ABCDEFGHI")
+        setGrid(alp9)
         delay(80)
-    bs = not bs
+        if bstate==len(blinksq)*2+2:
+            bstate=0
+            print(blinksq)
+            setGrid("         ")
+            delay(1000) # p300 pause
+            return True
+        elif bstate == 0:
+            delay(1000)
+    bstate+=1
+    return False
     
             
     
     
-    textFont(font, fsize)
+    
+
+def draw():
+    waitsign(False)
+    global ostate,client,inlet,typed
+    """textFont(font, 100)
     fill(255)
     noStroke()
-    square(Xgrid+tablen+500,Ygrid,400)
+    rect(Xgrid+tablen+200,Ygrid,800,400)
     fill(0)
-    text("ABC"+str(bstate),Xgrid+tablen+500,Ygrid+gridSize)
+    text(typed,Xgrid+tablen+200,Ygrid+gridSize)
+    stroke(0)"""
+    if not ostate:
+        client.sendall(b"collect")
+        print("hi")
+        inlet= str(client.recv(1024).decode("utf-8"))
+        inlet = inlet.split(' ')
+        print(inlet)
+        ostate = True
+        setGrid(inlet[0])
+    else:
+        newloop = UI(inlet[0],inlet[1].split(","))
+        if newloop:
+            #client.send(b"finished")
+            #typing = str(client.recv(1024).decode("utf-8")).split(" ")[1]
+            #typed += typing
+            print("br")
+            print("aftype")
+            ostate = False
+            
 
-def mouseReleased():
-    setGrid("XYZWLMNOP")
-    delay(1000)
-    
+        

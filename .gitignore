@@ -2,3 +2,5 @@
 Development/\.idea/
 
 Development/__pycache__/
+
+Development/Speller\.py/__pycache__/
