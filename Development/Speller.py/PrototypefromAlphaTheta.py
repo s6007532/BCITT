@@ -33,8 +33,67 @@ blinksq = ['r0,r0,r0', 'r1,r1,r1', 'r2,r2,r2', 'c0,c0,c0', 'c1,c1,c1', 'c2,c2,c2
 print('Connected by', addr)
 
 def p300():
-    time.sleep(3)
-    return("K")
+    bypass=True
+    global P300_clf
+    sample_num = 0
+    P300_data = []
+
+    if not bypass:
+        while True:
+            sample, timestamp = inlet.pull_sample()
+            P300_data.append(sample)
+            # print("appended",sample)
+            sample_num = sample_num + 1
+            time.sleep(0.004)
+            if sample_num == 465:
+                break
+    else:
+        ind = random.randint(0, 25)
+        print("num =", ind)
+        Series = np.load("../npSave/Pavarisa280219R06.npy")[ind, 0, :, :465]
+        print(np.asarray(Series).shape)
+        P300_data = Series
+        
+    #########Collecting Data while flashing##################
+    print(len(Blink_seq))
+    
+    #########Predict P300_result##################
+    P300 = np.array(P300_data).T
+    print(type(P300), P300.shape)
+    new_P300 = []
+    for blink in range(18):
+        tmps = [] #contain data of every node for one blink
+        for node in range(8):
+            # print(len(P300[node][50+20*blink:125+20*blink]),"ist",blink,node)
+            tmps += list(P300[node][50 + 20 * blink:125 + 20 * blink]) #200 - 500 ms (since data is digitalized at 250Hz)
+        # print(tmps)
+        new_P300 += [tmps]
+    new_P300 = np.array(new_P300) #shape = (18,600)
+    P300_result = P300_clf.decision_function(new_P300)
+    #########Predict P300_result##################
+
+    #########แปรผล##################
+    H = {'r0':4, 'r1':5, 'r2':6, 'c0':1, 'c1':2, 'c2':3}
+    for i in range(len(Blink_seq)):
+        Blink_seq[i] = H[Blink_seq[i]] 
+    #print(new_Blink_seq) #will be in form of [1,2,3,4,5,6]
+    Prob = [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6]]
+    for i in range(len(Blink_seq)):
+        Prob[Blink_seq[i]-1][0] += P300_result[i] #sum up probs from different blinks
+    #Prob will be like this :[[-5.644267831120814, 4], [-11.492414954500223, 5], [-15.265074033861413, 6],[-16.30554780973207, 1], [-5.209323588360705, 2], [-1.958844355953289, 3]]
+    row_result = [] #contain probs for column
+    column_result = [] #contain probs for row
+    for i in Prob:
+        if i[1] <=3:
+            column_result.append(i) 
+            #[[-5.644267831120814, 4], [-11.492414954500223, 5], [-15.265074033861413, 6]]
+        else:
+            row_result.append(i) 
+            #[[-16.30554780973207, 1], [-5.209323588360705, 2], [-1.958844355953289, 3]]
+    row = sorted(row_result)[-1][1] #find row with the highest prob  
+    column = sorted(column_result)[-1][1] #find column with the highest prob
+    #########แปรผล##################
+    return(SI_result[(row-4)*3+column-1])
 
 def SI():
     global svc_clf, P300_clf
