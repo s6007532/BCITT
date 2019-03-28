@@ -20,7 +20,7 @@ def setup():
     path = sketchPath("")
     os.chdir(path+"/../Speller.py")
     repath = os.getcwd()
-    os.system("start; CMD /k workbench.py")
+    os.system("start; CMD /k PrototypefromBatchPhasePower.py")
 
     global font,client,conn
     font = createFont("Arial",fsize)

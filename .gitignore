@@ -4,3 +4,7 @@ Development/\.idea/
 Development/__pycache__/
 
 Development/Speller\.py/__pycache__/
+
+Development/Flow\.txt
+
+Development/ServerTest\.py

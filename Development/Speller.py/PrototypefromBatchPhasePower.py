@@ -33,6 +33,7 @@ blinksq = ['r0,r0,r0', 'r1,r1,r1', 'r2,r2,r2', 'c0,c0,c0', 'c1,c1,c1', 'c2,c2,c2
 print('Connected by', addr)
 
 def p300(Blink_seq,SI_result):
+    print("P300 recv :",Blink_seq,SI_result)
     bypass=True
     global P300_clf
     sample_num = 0
@@ -47,10 +48,11 @@ def p300(Blink_seq,SI_result):
             time.sleep(0.004)
             if sample_num == 465:
                 break
+        P300_data = np.array(P300_data).T
     else:
         ind = random.randint(0, 25)
         print("num =", ind)
-        Series = np.load("../npSave/Pavarisa280219R06.npy")[ind, 0, :, :465]
+        Series = np.load("../npSave/Pavarisa280219R06.npy")[ind, 0, :, 465]
         print(np.asarray(Series).shape)
         P300_data = Series
         
@@ -58,17 +60,21 @@ def p300(Blink_seq,SI_result):
     print(len(Blink_seq))
     
     #########Predict P300_result##################
-    P300 = np.array(P300_data).T
+    P300 = P300_data
     print(type(P300), P300.shape)
     new_P300 = []
     for blink in range(18):
         tmps = [] #contain data of every node for one blink
         for node in range(8):
             # print(len(P300[node][50+20*blink:125+20*blink]),"ist",blink,node)
-            tmps += list(P300[node][50 + 20 * blink:125 + 20 * blink]) #200 - 500 ms (since data is digitalized at 250Hz)
+            index = 50 + 20 * blink,125 + 20 * blink
+            print("index :",index)
+            tmps += list(P300[node][index[0]:index[1]]) #200 - 500 ms (since data is digitalized at 250Hz)
         # print(tmps)
+        print(len(tmps))
         new_P300 += [tmps]
     new_P300 = np.array(new_P300) #shape = (18,600)
+    print("new p300,",new_P300)
     P300_result = P300_clf.decision_function(new_P300)
     #########Predict P300_result##################
 
@@ -144,7 +150,7 @@ while True:
         ret = (results + " " + ",".join(blinksq)).encode("utf-8")
         print(ret)
         sock.send(ret)
-        typing = p300(["we"])
+        typing = p300(",".join(blinksq).split(","),results)
         while str(sock.recv(1024).decode("utf-8")).split(" ")[0]!="finished":
             print("wait ",end='')
         sock.send(("type "+typing).encode("utf-8"))
