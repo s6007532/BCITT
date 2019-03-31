@@ -134,11 +134,10 @@ def UI(alp9,blinksq):
             fill(0)
             text(typed,Xgrid+tablen+200,Ygrid+gridSize)
         
-            delay(500) # p300 pause
+            delay(300) # p300 pause
         else:
             blink(blinksq[bstate//2])
             print(bstate)
-            delay(30)
             delay(80)
         
     #if (client):
@@ -150,10 +149,11 @@ def UI(alp9,blinksq):
         if bstate==len(blinksq)*2+2:
             bstate=0
             print(blinksq)
-            setGrid("         ")
-            delay(1000) # p300 pause
+            setGrid("   SI    ")
+            delay(500) # p300 pause
             return True
         elif bstate == 0:
+            print("here")
             delay(1000)
     bstate+=1
     return False
@@ -175,7 +175,7 @@ def draw():
     stroke(0)"""
     if not ostate:
         client.sendall(b"collect")
-        print("hi")
+        print("collecting")
         inlet= str(client.recv(1024).decode("utf-8"))
         inlet = inlet.split(' ')
         print(inlet)

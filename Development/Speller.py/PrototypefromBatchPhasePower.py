@@ -9,9 +9,9 @@ sock, addr = server.accept()
 
 from pylsl import StreamInlet, resolve_stream
 import os
-print(os.getcwd())
+#print(os.getcwd())
 import Preprocessing as pre
-print("hi")
+#print("hi")
 import numpy as np
 from sklearn.externals import joblib
 import random
@@ -19,10 +19,18 @@ import os
 import time
 import scipy as sp
 from scipy.signal import butter,freqz,lfilter,hilbert
-
-
+bypass=False
+if not bypass:
+    print("looking for an EEG stream...")
+    #print("No error")
+    streams = resolve_stream('type', 'EEG')
+    print("founded")
+    # create a new inlet to read from the stream
+    inlet = StreamInlet(streams[0])
+    sam_num = 0
+    Series = []
 svc_clf = joblib.load("weight_PavarisaNewUseRealSGD_1000_BatchPhasePower52.sav")
-print(svc_clf)
+#print(svc_clf)
 P300_clf = joblib.load(open('finalized_p300model.sav', 'rb'))
 print("model imported")
 ##will be changed into stream capturing
@@ -34,8 +42,8 @@ print('Connected by', addr)
 
 def p300(Blink_seq,SI_result):
     print("P300 recv :",Blink_seq,SI_result)
-    bypass=True
-    global P300_clf
+
+    global P300_clf, inlet
     sample_num = 0
     P300_data = []
 
@@ -57,18 +65,18 @@ def p300(Blink_seq,SI_result):
         P300_data = Series
         
     #########Collecting Data while flashing##################
-    print(len(Blink_seq))
+    #print(len(Blink_seq))
     
     #########Predict P300_result##################
     P300 = P300_data
-    print(type(P300), P300.shape)
+    #print(type(P300), P300.shape)
     new_P300 = []
     for blink in range(18):
         tmps = [] #contain data of every node for one blink
         for node in range(8):
             # print(len(P300[node][50+20*blink:125+20*blink]),"ist",blink,node)
             index = 50 + 20 * blink,125 + 20 * blink
-            print("index :",index)
+            #print("index :",index)
             tmps += list(P300[node][index[0]:index[1]]) #200 - 500 ms (since data is digitalized at 250Hz)
         # print(tmps)
         print(len(tmps))
@@ -102,20 +110,24 @@ def p300(Blink_seq,SI_result):
     return(SI_result[(row-4)*3+column-1])
 
 def SI():
-    global svc_clf
+    global svc_clf,inlet
+    """
     ind = random.randint(0, 25)
     print("num =", ind)
     Series = np.load("../npSave/Pavarisa280219R06.npy")[ind, 0, :, :]
     print(np.asarray(Series).shape)
     """
-    while x == 'OK':
+    Series=[]
+    sam_num=0
+    while True:
         sample, timestamp = inlet.pull_sample()
         Series.append(sample)
         sam_num = sam_num+1
         if sam_num == 1000:
             break
+        time.sleep(0.004)
     Series = np.asarray(Series).T
-    print(np.asarray(Series).shape)"""
+    print(np.asarray(Series).shape)
 
     bb, a = pre.butter_bandpass(0.5, 30, 500, order=5)
     bandpassData = pre.lfilter(bb, a, Series)
